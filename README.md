@@ -111,5 +111,5 @@ Released under the [MIT License](LICENSE) — free to use, modify and distribute
 ---
 
 <p align="center">
-  <sub>Built for the WiseTech bench · Windows desktop app · v1.0.0</sub>
+  <sub>Built for burner actuator troubleshooting · Windows desktop app · v1.0.0</sub>
 </p>

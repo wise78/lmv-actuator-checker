@@ -1,36 +1,18 @@
-# Claude Code local settings -- not part of the project.
+# This repository is the DISTRIBUTION package for LMV Actuator Checker:
+# the README, the user documentation, and the banner/screenshot assets.
+# The installer itself is published as a GitHub Release asset, not committed
+# here -- a 34 MB binary per version would bloat every clone forever.
+#
+# The application source code and the CAN-RE reverse-engineering project
+# (captures, derived analysis, findings) live outside this repo.
+/Otomasi/
+
+# Claude Code local settings
 /.claude/
 
-# --- CAN-RE research project -----------------------------------------------
-# Only the LMV Actuator Checker app itself is tracked for now (scripts/desktop,
-# scripts/sqm45, scripts/sqm45_web, scripts/sqm45_webapp.py, installer/).
-# Dataset, findings and other reverse-engineering tooling are deferred until
-# the full CAN-RE research project is published separately.
-/Otomasi/CAN-RE/captures/
-/Otomasi/CAN-RE/derived/
-/Otomasi/CAN-RE/dataset_manifest.csv
-/Otomasi/CAN-RE/FINDINGS.md
-/Otomasi/CAN-RE/Hardware/
-/Otomasi/CAN-RE/Passive Monitor UI.md
-/Otomasi/CAN-RE/audit/
-/Otomasi/CAN-RE/audit_script.py
+# Loose working files
+/wiseTech Logo.png
 
-# Real health-check PDF reports -- contain actual unit serial numbers, never
-# belongs in a public repo regardless of the CAN-RE decision above.
-/Otomasi/CAN-RE/reports/
-
-# Standalone reverse-engineering / capture tools, not part of the checker app.
-/Otomasi/CAN-RE/scripts/analysis/
-/Otomasi/CAN-RE/scripts/deprecated/
-/Otomasi/CAN-RE/scripts/boot_replay_sequence.csv
-/Otomasi/CAN-RE/scripts/launch_sqm45_passive_monitor.bat
-/Otomasi/CAN-RE/scripts/sqm45_boot_replay.py
-/Otomasi/CAN-RE/scripts/sqm45_engine_demo.py
-/Otomasi/CAN-RE/scripts/sqm45_passive_monitor_ui.py
-/Otomasi/CAN-RE/scripts/tm7565_guided_capture.py
-/Otomasi/CAN-RE/scripts/tm7565_live_view.py
-/Otomasi/CAN-RE/scripts/tm7565_serial_logger.py
-
-# Python cache, anywhere.
+# Python cache, anywhere
 __pycache__/
 *.pyc

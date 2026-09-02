@@ -1,3 +1,0 @@
-# The compiled installer .exe -- regenerate with
-# `python desktop/build.py --installer`, do not commit a 30+ MB binary.
-output/

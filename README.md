@@ -8,6 +8,9 @@
     <img src="https://img.shields.io/badge/Documentation-PDF-17734A?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="Documentation">
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows-6E7C93?style=for-the-badge&logo=windows11&logoColor=white" alt="Windows">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-C0701A?style=for-the-badge" alt="MIT License">
+  </a>
 </p>
 
 ---
@@ -98,6 +101,12 @@ The installer bundles two recordings of real bus traffic that replay as if they 
 - **2 actuators, commanded move 30° → 90°** — shows a real transit on the charts
 
 Pick *"Try a demo (no hardware)"* on the connect screen. Nothing is ever transmitted in this mode, so it's safe to run anywhere.
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE) — free to use, modify and distribute, provided the copyright notice is kept. Note the warranty disclaimer: this software is provided **as is**, with no guarantee of fitness for any particular purpose. It is a diagnostic instrument, not a certified safety device.
 
 ---
 

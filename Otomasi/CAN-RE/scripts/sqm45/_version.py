@@ -13,4 +13,4 @@ __version__ = "1.0.0"
 # Set at build time by desktop/build.py (stamped into this file before
 # PyInstaller runs); "dev" means "not a packaged build" -- source checkout or
 # a Flask-only launch via sqm45_webapp.py.
-BUILD_DATE = "2026-09-01 15:14"
+BUILD_DATE = "2026-09-02 11:42"

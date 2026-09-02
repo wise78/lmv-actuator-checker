@@ -1,0 +1,4 @@
+# Build output -- regenerate with `python desktop/build.py`, do not commit.
+dist/
+build/
+__pycache__/

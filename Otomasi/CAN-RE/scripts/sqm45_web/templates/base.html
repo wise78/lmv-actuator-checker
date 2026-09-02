@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LMV Actuator Checker — {% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="topbar">
+  <img src="{{ url_for('static', filename='img/wisetech-logo.png') }}" alt="" class="brand-logo">
+  <span class="brand">LMV Actuator Checker</span>
+  <span class="subtitle">Siemens LMV actuator bench instrument</span>
+  <nav class="page-nav">
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}">Dashboard</a>
+    <a href="{{ url_for('servo_checker') }}" class="{{ 'active' if active_page == 'servo_checker' else '' }}">Servo Checker</a>
+    <a href="{{ url_for('health_check') }}" class="{{ 'active' if active_page == 'health_check' else '' }}">Health Check</a>
+    <a href="{{ url_for('raw_sniffer') }}" class="{{ 'active' if active_page == 'raw_sniffer' else '' }}">Raw Sniffer</a>
+  </nav>
+  <div class="spacer"></div>
+  <span id="linkChip" class="chip link-lost">CONNECTING…</span>
+  <span class="chip static mono" id="portChip">Input: {{ source_label }}</span>
+  <span class="chip static">50 kbps</span>
+  <span class="chip static mono" title="Build version -- stamped into every PDF report so a result traces back to exactly what produced it">v{{ app_version }}</span>
+  {% if desktop_mode %}<a href="#" class="chip static" id="changeAdapterLink" title="Disconnect and return to the port picker -- the app will restart">⟵ Change adapter</a>{% endif %}
+</div>
+
+<div class="safetybar">
+  <div class="safety-group">
+    <button id="btnHold" class="btn-hold">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
+        <rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect>
+      </svg>
+      HOLD POSITION <span class="kbd">Esc / Space</span>
+    </button>
+    <span class="safety-caption">Safe stop — keeps transmitting, actuator stays alive</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="safety-group">
+    <div class="mode-toggle">
+      <button id="btnListen" class="active" data-mode="listen">Listen only</button>
+      <button id="btnActive" data-mode="active" {% if listen_only %}disabled title="Locked by --listen-only"{% endif %}>Keep alive — HOLD</button>
+    </div>
+    <span class="bus-mode-label">BUS MODE{% if listen_only %} — RX ONLY, LOCKED{% endif %}</span>
+  </div>
+
+  <div class="spacer-flex"></div>
+
+  <div id="lostBanner" class="safety-group notice-group">
+    <div class="notice-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A96A00" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;">
+        <path d="M12 8.5v4.5"></path><circle cx="12" cy="16.6" r="0.7" fill="#A96A00"></circle>
+        <path d="M10.3 3.9 2.7 17.2A1.9 1.9 0 0 0 4.4 20h15.2a1.9 1.9 0 0 0 1.7-2.8L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z"></path>
+      </svg>
+      <span>Browser link lost — HOLD asserted</span>
+    </div>
+    <span class="safety-caption">Transmission continued — actuator never dropped</span>
+  </div>
+
+  <div class="safety-group align-end">
+    <button id="btnBusSwitch" class="btn-busswitch"><div class="fill"></div><span>SHUT DOWN BUS</span></button>
+    <span id="busSwitchCaption" class="safety-caption">Press and hold 1 s — actuator switches off</span>
+  </div>
+</div>
+
+{% block body %}{% endblock %}
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/common.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

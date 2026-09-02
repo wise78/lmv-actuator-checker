@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Health Check{% endblock %}
+{% block body %}
+<div class="body">
+  <div class="hc-layout">
+
+    <div class="panel" id="hcSetup">
+      <div class="row-header" style="margin-bottom:10px;">
+        <span class="label">Start a Health Check</span>
+        <span class="hint">H0–H9, one servo at a time, ~5 minutes</span>
+      </div>
+
+      <div class="hc-form-row">
+        <div class="hc-field">
+          <span class="hc-field-label">Servo under test</span>
+          <div class="role-tabs" id="hcRoleTabs"><!-- built from the server roster --></div>
+          <div id="hcExperimentalNote" class="hc-experimental" hidden></div>
+        </div>
+      </div>
+
+      <div class="hc-form-row">
+        <label class="hc-field">
+          <span class="hc-field-label">Serial number *</span>
+          <input type="text" id="hcSerial" class="hc-input" placeholder="e.g. SQM45.653A21 12345" autocomplete="off">
+        </label>
+        <label class="hc-field">
+          <span class="hc-field-label">Technician *</span>
+          <input type="text" id="hcTechnician" class="hc-input" placeholder="Name" autocomplete="off">
+        </label>
+        <label class="hc-field">
+          <span class="hc-field-label">Work order</span>
+          <input type="text" id="hcWorkOrder" class="hc-input" placeholder="optional" autocomplete="off">
+        </label>
+      </div>
+
+      <button class="btn-move-big" id="btnStartHc" style="margin-top:14px; max-width:280px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4v16l14-8Z"/>
+        </svg>
+        START HEALTH CHECK
+      </button>
+
+      <div class="arrival-note" style="margin-top:14px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B93A1" stroke-width="2.1" stroke-linecap="round" style="flex-shrink:0; margin-top:1px;">
+          <circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.7" fill="#8B93A1"/>
+        </svg>
+        <span>Requires the bus already in <span class="mono">Keep alive — HOLD</span> mode (safety bar above) and the selected role live on the bus. H5/H6/H10 command real moves — keep the shaft uncoupled. Only actuators whose target frame is proven can be selected.</span>
+      </div>
+    </div>
+
+    <div class="panel" id="hcRunning" style="display:none;">
+      <div class="row-header" style="margin-bottom:10px;">
+        <span class="label">Health check running — <span id="hcRoleLabel" class="mono"></span></span>
+        <span class="hint mono" id="hcIdentity">—</span>
+      </div>
+
+      <div class="hc-progress-row">
+        <div class="hc-progress-bar"><div class="hc-progress-fill" id="hcProgressFill"></div></div>
+        <span class="hint mono" id="hcProgressText">—</span>
+      </div>
+
+      <div class="readouts" style="grid-template-columns: repeat(3, minmax(0,1fr)); margin-top:12px;">
+        <div class="readout"><span class="k">CURRENT STEP</span><span class="v" id="hcCurrentStep">—</span></div>
+        <div class="readout"><span class="k">CURRENT ANGLE</span><span class="v mono" id="hcCurrentAngle">—</span></div>
+        <div class="readout"><span class="k">AS-FOUND</span><span class="v mono" id="hcAsFound">—</span></div>
+      </div>
+
+      <div id="hcHtPrompt" class="hc-ht-prompt" style="display:none;">
+        <span>H4 disturbance window running — energise the HT transformer now if available, and record which.</span>
+        <div class="hc-ht-buttons">
+          <button class="btn-secondary" id="btnHtApplied">HT Applied</button>
+          <button class="btn-secondary" id="btnHtNotAvailable">Not available</button>
+        </div>
+      </div>
+
+      <div class="hc-steps-wrap">
+        <table class="hc-steps" id="hcStepsTable">
+          <thead>
+            <tr><th title="order the steps actually run in">#</th><th title="permanent step identity -- never renumbered, so a result recorded months ago still means the same test">Step</th><th>Test</th><th>Status</th><th>Measured</th><th>Criterion</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="hc-actions">
+        <button id="btnAbortHc" class="btn-hold">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
+            <rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect>
+          </svg>
+          ABORT (safe)
+        </button>
+        <span class="safety-caption">Asserts HOLD, keeps transmitting, records a partial result</span>
+      </div>
+    </div>
+
+    <div class="panel" id="hcVerdict" style="display:none;">
+      <div class="hc-verdict-banner" id="hcVerdictBanner">—</div>
+      <div class="hc-report-row">
+        <button id="btnReport" class="btn-report">Download PDF report</button>
+        <span id="hcReportNote" class="hint"></span>
+      </div>
+
+      <div class="hc-steps-wrap" style="margin-top:14px;">
+        <table class="hc-steps" id="hcVerdictStepsTable">
+          <thead>
+            <tr><th title="order the steps actually run in">#</th><th title="permanent step identity -- never renumbered, so a result recorded months ago still means the same test">Step</th><th>Test</th><th>Status</th><th>Measured</th><th>Criterion</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="limitation" style="margin-top:14px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B93A1" stroke-width="2.1" stroke-linecap="round" style="flex-shrink:0; margin-top:1px;">
+          <circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.7" fill="#8B93A1"/>
+        </svg>
+        <span><strong>What this test does not measure:</strong> every angle here is the actuator's own internally reported position, read over CAN. There is no independent shaft encoder on this bench. An actuator whose Hall sensor scale or offset has drifted — but which is stable and self-consistent — will report plausible numbers and will pass this test. H8's redundant position/movement check is a second internal encoding inside the same frame, not a physically independent sensor. The PDF report carries these same limitations on its own page, so a copy handed to someone else cannot lose them.</span>
+      </div>
+
+      <button class="btn-secondary" id="btnNewHc" style="margin-top:14px;">Start another check</button>
+    </div>
+
+    <!-- This page used to have no #log at all, so every server refusal --
+         START while the bus was in listen-only, a missing role -- vanished
+         and the button looked dead. The events log is where those land. -->
+    <div class="panel">
+      <div class="row-header" style="margin-bottom:8px;">
+        <span class="label">Events</span>
+        <span class="hint">refusals, presence changes, faults</span>
+      </div>
+      <div id="log"></div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/health_check.js') }}"></script>
+{% endblock %}

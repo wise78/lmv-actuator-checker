@@ -1,0 +1,437 @@
+/* Light instrument theme -- deliberately not the old Tkinter dark scheme.
+   Light reads better under factory high-bay lighting and keeps green/amber/
+   red free to mean only STATE, never decoration. */
+
+:root {
+  --bg: #F6F7F9;
+  --panel: #FFFFFF;
+  --border: #E4E7EC;
+  --text: #171A21;
+  --muted: #8B93A1;
+  --muted2: #565E6D;
+  --air: #2D62C4;
+  --air-soft: #E9F0FD;
+  --air-line: #B9CDF0;
+  --fuel: #C0701A;
+  --fuel-soft: #F6E9DA;
+  --fuel-line: #E8C79A;
+  --good: #17734A;
+  --good-soft: #E3F2EA;
+  --good-line: #B7DCC6;
+  --warn: #A96A00;
+  --warn-soft: #FBF1DB;
+  --warn-line: #E8CE92;
+  --track: #EDEFF3;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  max-width: 100%;
+  overflow-x: hidden;   /* backstop only -- the real fix is min-width:0 below */
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+/* ---- top bar ---- */
+.topbar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap; row-gap: 6px;
+  padding: 10px 24px; min-height: 56px;
+  background: var(--panel); border-bottom: 1px solid var(--border);
+}
+.brand-logo { height: 26px; width: auto; display: block; flex-shrink: 0; }
+.topbar .brand { font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
+.topbar .subtitle { font-size: 12px; color: var(--muted); }
+.topbar .spacer { flex-grow: 1; }
+.page-nav { display: flex; gap: 2px; margin-left: 8px; }
+.page-nav a {
+  padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  color: var(--muted2); text-decoration: none;
+}
+.page-nav a.active { background: var(--text); color: #fff; font-weight: 550; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+}
+.chip.link-ok { background: var(--good-soft); border: 1px solid var(--good-line); color: var(--good); }
+.chip.link-lost { background: var(--warn-soft); border: 1px solid var(--warn-line); color: var(--warn); }
+.chip.static { background: #F1F3F6; border: 1px solid var(--border); color: var(--muted2); }
+
+/* ---- safety bar ----
+   Every group follows the SAME shape -- control first, caption/label below
+   -- and every primary control shares one fixed height (--ctrl-h). That is
+   what actually lines the three controls up on one row; align-items:center
+   on groups of different total heights does not, since it centers each
+   group's whole block rather than anchoring the controls to a shared row. */
+.safetybar {
+  --ctrl-h: 44px;
+  display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap;
+  padding: 12px 24px; background: var(--panel); border-bottom: 1px solid var(--border);
+}
+.safety-group { display: flex; flex-direction: column; gap: 5px; }
+.safety-group.align-end { align-items: flex-end; }
+.safety-caption { font-size: 11px; color: var(--muted2); padding-left: 3px; }
+.bus-mode-label { padding-left: 3px; font-weight: 650; letter-spacing: .06em; font-size: 10px; color: var(--muted2); }
+
+/* Below this width the bar can no longer fit in one row. Switch it to a
+   deliberate stacked layout instead of letting flex-wrap break mid-row --
+   a lone vertical divider or a right-aligned button stranded next to
+   nothing looks broken, even though nothing is actually malfunctioning. */
+@media (max-width: 820px) {
+  .safetybar { flex-direction: column; align-items: stretch; gap: 14px; }
+  .divider { display: none; }
+  .spacer-flex { display: none; }
+  .safety-group.align-end { align-items: flex-start; border-top: 1px solid var(--border); padding-top: 14px; }
+  .notice-group.show .notice-banner { height: auto; padding: 10px 14px; white-space: normal; }
+}
+.btn-hold {
+  display: inline-flex; align-items: center; gap: 9px; height: var(--ctrl-h); box-sizing: border-box;
+  padding: 0 22px; border-radius: 8px; background: var(--text); border: none;
+  color: #fff; font-size: 14px; font-weight: 650; cursor: pointer;
+  box-shadow: 0 0 0 3px #D8DCE3;
+}
+.btn-hold:active { transform: translateY(1px); }
+.btn-hold .kbd { font-size: 11px; font-weight: 500; color: #9BA3B2; margin-left: 4px; }
+.divider { width: 1px; height: var(--ctrl-h); background: var(--border); align-self: flex-start; }
+
+.mode-toggle {
+  display: flex; align-items: stretch; gap: 2px; padding: 2px; height: var(--ctrl-h); box-sizing: border-box;
+  background: #F1F3F6; border: 1px solid var(--border); border-radius: 7px;
+}
+.mode-toggle button {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 14px; border-radius: 5px; border: none; background: transparent;
+  font-size: 12px; font-weight: 500; color: var(--muted2); cursor: pointer;
+}
+.mode-toggle button.active { background: #fff; box-shadow: 0 1px 2px rgba(23,26,33,0.10); font-weight: 650; color: var(--text); }
+
+.spacer-flex { flex-grow: 1; }
+
+/* One control, two directions: SHUT DOWN BUS when transmitting/listening,
+   BUS ON (restores to the safe LISTEN ONLY mode, never straight to KEEP
+   ALIVE) once idle. Same press-and-hold-1s animation both ways, so the
+   off/on pair reads as one consistent gesture -- only the color and label
+   say which direction it currently is. */
+.btn-busswitch {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  height: var(--ctrl-h); box-sizing: border-box;
+  padding: 0 20px; border-radius: 8px; border: 1.5px solid #CFD4DC; background: #fff;
+  color: var(--muted2); font-size: 13px; font-weight: 600; cursor: pointer;
+  position: relative; overflow: hidden; user-select: none;
+}
+.btn-busswitch .fill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: #FCE4E4; z-index: 0;
+  transition: width 1s linear;
+}
+.btn-busswitch.turn-on .fill { background: var(--good-soft); }
+.btn-busswitch span { position: relative; z-index: 1; }
+.btn-busswitch.holding .fill { width: 100%; }
+
+/* Held 1s, request sent, waiting on the server (can take a few seconds on
+   real hardware). Fill stays locked full -- draining it now, before
+   anything is confirmed, would read as "cancelled". Pulse instead so it
+   reads as "working", not "stuck". */
+.btn-busswitch.pending { cursor: wait; }
+.btn-busswitch.pending .fill { width: 100%; transition: none; }
+.btn-busswitch.pending span { animation: shutdownPulse 1s ease-in-out infinite; }
+
+/* Server just confirmed the requested state actually took effect: snap
+   instantly (no transition) to an unmistakably different, inverted style.
+   This snap IS the confirmation -- it must not ease in, or it reads as
+   more of the same animation rather than a distinct event. Off confirms
+   dark/inverted; on confirms solid green -- still a snap, not a fade. */
+.btn-busswitch.confirmed {
+  background: var(--text); border-color: var(--text); color: #fff; transition: none;
+}
+.btn-busswitch.confirmed.turn-on { background: var(--good); border-color: var(--good); }
+.btn-busswitch.confirmed .fill { width: 0%; transition: none; }
+.btn-busswitch.confirmed span { animation: none; }
+
+/* Only after holding the confirmed state for a beat does it ease back. */
+.btn-busswitch.confirmed.fading {
+  transition: background 0.6s ease, color 0.6s ease, border-color 0.6s ease;
+  background: #fff; border-color: #CFD4DC; color: var(--muted2);
+}
+
+@keyframes shutdownPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* Same shape as every other group: one primary element sized to --ctrl-h
+   drives the row alignment, and the caption lives BELOW it, outside the
+   box. Cramming both lines inside the colored box (the previous version)
+   made the box's own height -- and so its visual center -- include the
+   caption too, which is exactly what put it out of line with the plain
+   buttons and toggle next to it. */
+.notice-group { display: none; }
+.notice-group.show { display: flex; }
+.notice-banner {
+  display: flex; align-items: center; gap: 8px; height: var(--ctrl-h); box-sizing: border-box;
+  padding: 0 14px; border-radius: 8px; white-space: nowrap;
+  background: var(--warn-soft); border: 1px solid var(--warn-line);
+  font-size: 12.5px; font-weight: 650; color: #7A4E00;
+}
+
+/* ---- layout ---- */
+.body { display: flex; flex-direction: column; gap: 14px; padding: 16px 24px 24px; }
+.row-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; row-gap: 6px; }
+.row-header .label { font-size: 13px; font-weight: 650; }
+.row-header .hint { font-size: 11px; color: var(--muted); }
+
+/* auto-fit + minmax reflows to 1 column on a narrow window with no manual
+   breakpoint. min-width:0 on the grid item is the part that actually
+   matters -- without it a grid item refuses to shrink below its content's
+   natural width, and two of those side by side force the whole page to
+   scroll sideways instead of the SVG/text inside just getting smaller. */
+#gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.gauge-card {
+  display: flex; flex-wrap: wrap; gap: 20px; padding: 18px; min-width: 0;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+}
+.gauge-card.absent { opacity: 0.5; }
+.gauge-svg-wrap { flex: 1 1 140px; min-width: 100px; max-width: 188px; }
+.gauge-svg-wrap svg { display: block; width: 100%; height: auto; }
+.gauge-info { display: flex; flex-direction: column; gap: 10px; flex: 2 1 220px; min-width: 0; }
+.gauge-title { display: flex; align-items: center; gap: 8px; }
+.dot { width: 9px; height: 9px; border-radius: 2px; }
+.dot.air { background: var(--air); }
+.dot.fuel { background: var(--fuel); }
+.role-name { font-size: 15px; font-weight: 650; }
+.presence-pill { padding: 3px 9px; border-radius: 999px; font-size: 10px; font-weight: 650; letter-spacing: 0.04em; }
+.presence-pill.live { background: var(--good-soft); color: var(--good); }
+.presence-pill.stale { background: var(--warn-soft); color: var(--warn); }
+.presence-pill.absent { background: #F1F3F6; color: var(--muted); }
+.readouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.readout { display: flex; flex-direction: column; gap: 2px; padding: 9px 11px; background: var(--bg); border-radius: 7px; }
+.readout .k { font-size: 10px; letter-spacing: 0.05em; color: var(--muted); }
+.readout .v { font-size: 18px; font-weight: 650; }
+
+.setpoint-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.setpoint-row input[type=number] { width: 70px; flex-shrink: 0; padding: 6px 8px; border-radius: 6px; border: 1px solid #CFD4DC; font-size: 13px; }
+.setpoint-row input[type=range] { flex: 1 1 80px; min-width: 0; }
+.btn-move {
+  padding: 8px 14px; border-radius: 7px; border: none; background: var(--air); color: #fff;
+  font-size: 12px; font-weight: 650; cursor: pointer;
+}
+.btn-move:disabled { background: #C6CBD4; cursor: not-allowed; }
+
+.panel { padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; min-width: 0; }
+
+/* SVG, not canvas: canvas is a raster bitmap at a fixed backing resolution --
+   CSS-scaling it down (as this container does on every resize) blurs the
+   text and lines. SVG has no backing resolution to blur; its viewBox is
+   re-synced to the container's real pixel size on resize (dashboard.js)
+   so numbers stay a constant, crisp, readable size instead of stretching. */
+/* Height is a STARTING point only -- LiveChart._applyHeight() grows it so
+   each actuator gets its own MOVING lane. At four servos the old fixed
+   260px pushed the lanes onto the time axis and clipped the fourth. */
+.chart-wrap { width: 100%; height: 260px; min-width: 0; position: relative; }
+/* #scChart is the servo-checker page's chart -- LiveChart only sets a
+   viewBox, so without an explicit size rule the SVG fell back to the
+   replaced-element default (300x150), letterboxing the plot and skewing
+   every crosshair coordinate mapping. */
+#chart, #scChart { display: block; width: 100%; height: 100%; }
+
+/* chart toolbar + crosshair tooltip (LiveChart wires #chartWindow/#chartYMode
+   itself when a template provides them) */
+.chart-toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.chart-select {
+  padding: 4px 8px; border-radius: 6px; border: 1px solid #CFD4DC;
+  background: #fff; font-size: 12px; color: var(--text);
+}
+.chart-legend-note { margin-left: auto; }
+.chart-tip {
+  position: absolute; pointer-events: none; z-index: 5;
+  min-width: 150px; padding: 7px 9px; border-radius: 7px;
+  background: #fff; border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(23, 26, 33, 0.10);
+  font-size: 11px; line-height: 1.45; color: var(--text);
+}
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted2); }
+.legend-swatch { width: 16px; height: 2px; }
+
+#log { display: flex; flex-direction: column-reverse; gap: 4px; max-height: 220px; overflow-y: auto; font-size: 11.5px; }
+.log-row { display: flex; gap: 8px; padding: 4px 6px; border-radius: 5px; }
+.log-row .t { color: var(--muted); flex-shrink: 0; }
+.log-row.kind-safety { background: var(--warn-soft); }
+.log-row.kind-fault { background: #FDE4E4; }
+.log-row.kind-presence { color: var(--muted2); }
+.log-row.kind-command { color: var(--air); }
+
+.limitation {
+  display: flex; gap: 8px; padding: 10px 14px; background: #F1F3F6; border: 1px solid var(--border); border-radius: 8px;
+  font-size: 11.5px; color: var(--muted2); line-height: 1.5;
+}
+
+/* ---- Servo Checker ---- */
+.sc-layout { display: flex; gap: 14px; flex-wrap: wrap; }
+.sc-left { display: flex; flex-direction: column; gap: 14px; width: 460px; flex-shrink: 0; }
+.sc-right { display: flex; flex-direction: column; gap: 14px; flex: 1 1 480px; min-width: 0; }
+
+.role-tabs { display: flex; gap: 2px; padding: 2px; background: #F1F3F6; border: 1px solid var(--border); border-radius: 7px; }
+.role-tabs button {
+  display: flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: 5px; border: none;
+  background: transparent; font-size: 12px; font-weight: 500; color: var(--muted2); cursor: pointer;
+}
+.role-tabs button.active { background: #fff; box-shadow: 0 1px 2px rgba(23,26,33,0.10); font-weight: 650; color: var(--text); }
+.role-tabs button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.sc-gauge-wrap { display: flex; justify-content: center; }
+.sc-gauge-wrap svg { width: 240px; height: 240px; }
+
+.state-chip-row { display: flex; align-items: center; gap: 8px; }
+.state-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 7px; font-size: 12.5px; }
+.state-chip .hex { font-weight: 700; }
+
+.setpoint-big-row { display: flex; align-items: center; gap: 12px; }
+.spin-btn {
+  display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0;
+  border: 1px solid #CFD4DC; border-radius: 7px; background: #fff; cursor: pointer;
+}
+.setpoint-display {
+  display: flex; align-items: baseline; gap: 4px; flex-grow: 1; justify-content: center;
+  padding: 6px 0; background: var(--bg); border-radius: 7px;
+}
+.setpoint-display .num { font-size: 30px; font-weight: 700; }
+.setpoint-display .deg { font-size: 16px; color: var(--muted); }
+
+.arrival-note {
+  display: flex; gap: 8px; padding: 10px 12px; background: var(--bg); border-radius: 7px;
+  font-size: 11px; color: var(--muted2); line-height: 1.45;
+}
+
+.btn-move-big {
+  display: flex; align-items: center; justify-content: center; gap: 8px; flex-grow: 1;
+  padding: 13px; border-radius: 8px; border: none; background: var(--air); color: #fff;
+  font-size: 14px; font-weight: 650; cursor: pointer;
+}
+.btn-move-big:disabled { background: #C6CBD4; cursor: not-allowed; }
+.btn-secondary {
+  display: flex; align-items: center; padding: 13px 18px; border-radius: 8px;
+  border: 1px solid #CFD4DC; background: #fff; color: var(--muted2); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.inspector-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.inspector-cell { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; background: var(--bg); border-radius: 7px; }
+.inspector-cell .k { font-size: 10px; letter-spacing: 0.04em; color: var(--muted); }
+.inspector-cell .v { font-size: 13px; font-weight: 600; }
+.inspector-cell .note { font-size: 10px; color: #A8AEBA; }
+
+@media (max-width: 980px) {
+  .sc-left { width: 100%; }
+}
+
+/* ---- Health Check ---- */
+.hc-layout { display: flex; flex-direction: column; gap: 14px; }
+
+.hc-form-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.hc-field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 200px; min-width: 0; }
+.hc-field-label { font-size: 11px; font-weight: 650; color: var(--muted2); }
+.hc-input {
+  padding: 9px 11px; border-radius: 7px; border: 1px solid #CFD4DC; background: #fff;
+  font-size: 13px; color: var(--text); min-width: 0;
+}
+.hc-input:focus { outline: 2px solid var(--air-line); outline-offset: -1px; }
+
+.hc-progress-row { display: flex; align-items: center; gap: 12px; }
+.hc-progress-bar { flex: 1 1 auto; min-width: 0; height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+/* No CSS transition here: the fill width is retargeted at snapshot rate,
+   and a 0.4 s ease restarted 10x/second visibly lagged behind the real
+   progress. The bar moves in discrete honest steps instead. */
+.hc-progress-fill { height: 100%; width: 0%; background: var(--air); border-radius: 999px; }
+
+.hc-ht-prompt {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin-top: 14px; padding: 12px 14px; background: var(--warn-soft); border: 1px solid var(--warn-line);
+  border-radius: 8px; font-size: 12.5px; color: #7A4E00; font-weight: 600;
+}
+.hc-ht-buttons { display: flex; gap: 8px; flex-shrink: 0; }
+
+.hc-steps-wrap { margin-top: 14px; overflow-x: auto; min-width: 0; }
+.hc-steps { width: 100%; border-collapse: collapse; font-size: 12px; }
+.hc-steps th {
+  text-align: left; padding: 8px 10px; font-size: 10px; letter-spacing: 0.05em; color: var(--muted);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.hc-steps td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.hc-steps tr:last-child td { border-bottom: none; }
+.hc-step-row.current td { background: var(--air-soft); }
+.hc-step-row.status-fail td { background: #FDF1F1; }
+.hc-measured { white-space: pre-wrap; min-width: 220px; }
+.hc-criterion { color: var(--muted2); min-width: 200px; }
+.hc-baseline { color: var(--muted); font-size: 10.5px; }
+
+.hc-pill { display: inline-flex; padding: 3px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap; }
+.hc-pill-pending { background: #F1F3F6; color: var(--muted); }
+.hc-pill-running { background: var(--air-soft); color: var(--air); }
+.hc-pill-pass { background: var(--good-soft); color: var(--good); }
+.hc-pill-fail { background: #FCE4E4; color: #B3261E; }
+.hc-pill-aborted, .hc-pill-skipped { background: var(--warn-soft); color: var(--warn); }
+
+.hc-actions { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+
+.hc-verdict-banner {
+  padding: 16px 18px; border-radius: 8px; font-size: 16px; font-weight: 700; text-align: center;
+}
+.hc-verdict-banner.pass { background: var(--good-soft); color: var(--good); border: 1px solid var(--good-line); }
+.hc-verdict-banner.fail { background: #FCE4E4; color: #B3261E; border: 1px solid #F3B9B9; }
+.hc-verdict-banner.aborted { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn-line); }
+
+/* -- multi-actuator roster (up to LMV5's ACT1-6) --------------------------- */
+/* Cards, tabs and legend are generated from the server roster, so per-role
+   colours can no longer live in CSS classes -- they arrive as inline styles.
+   What stays here is everything structural that must hold at six actuators. */
+.chip.monitor-only {
+  background: var(--warn-soft); border: 1px solid var(--warn-line); color: var(--warn);
+  font-size: 9px; letter-spacing: 0.04em; padding: 2px 6px; cursor: help;
+}
+.role-tabs { flex-wrap: wrap; }
+.role-tabs button.tab-absent { opacity: 0.45; }
+.setpoint-row input:disabled { background: #F1F3F6; cursor: not-allowed; }
+/* Six cards must stay readable rather than shrinking to slivers: the grid
+   wraps to a new row instead of dividing one row six ways. */
+#gauges { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+@media (max-width: 760px) { #gauges { grid-template-columns: 1fr; } }
+.chip.static.experimental {
+  background: #EDE7F6; border: 1px solid #C5B3E6; color: #5B3FA8;
+  font-size: 9px; letter-spacing: 0.04em; padding: 2px 6px; cursor: help;
+}
+.role-tabs button.tab-experimental { color: #5B3FA8; }
+.role-tabs button.tab-experimental::after { content: " ⚗"; font-size: 10px; }
+.hc-experimental {
+  margin-top: 8px; padding: 8px 11px; border-radius: 7px; font-size: 11.5px;
+  background: #EDE7F6; border: 1px solid #C5B3E6; color: #4A3288;
+}
+
+/* -- health check report export ------------------------------------------- */
+.hc-report-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.btn-report {
+  padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer;
+  background: var(--text); color: #fff; font-size: 13px; font-weight: 650;
+}
+.btn-report:disabled { background: #C6CBD4; cursor: wait; }
+.btn-report:active:not(:disabled) { transform: translateY(1px); }
+#hcReportNote { font-size: 11.5px; }
+#hcReportNote.ok { color: var(--good); }
+#hcReportNote.err { color: var(--warn); }
+.sniff-savenote {
+  margin: 8px 0 2px; padding: 9px 12px; border-radius: 8px; font-size: 11.5px;
+  background: var(--panel); border: 1px solid var(--border); color: var(--muted2);
+  line-height: 1.55;
+}
+.sniff-savenote b { color: var(--text); }
+.sniff-savedbar { display: none; }
+.sniff-savedbar.show {
+  display: block; margin-top: 8px; padding: 9px 12px; border-radius: 8px;
+  font-size: 11.5px; background: var(--good-soft); border: 1px solid var(--good-line);
+  color: var(--good); word-break: break-all;
+}

@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LMV Actuator Checker</title>
+<style>
+  :root {
+    --bg: #F6F7F9; --panel: #FFFFFF; --border: #E4E7EC; --text: #171A21;
+    --muted: #8B93A1; --muted2: #565E6D; --air: #2D62C4; --air-soft: #E9F0FD;
+    --good: #17734A; --good-soft: #E3F2EA; --good-line: #B7DCC6;
+    --warn: #A96A00; --warn-soft: #FBF1DB; --warn-line: #E8CE92;
+    --bad: #B3261E; --bad-soft: #FDE4E4; --bad-line: #F0BDBD;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", "Cascadia Mono", sans-serif; font-size: 13px;
+    -webkit-user-select: none; user-select: none;
+  }
+  input, button, select { user-select: text; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 22px 24px 40px; }
+  .brand { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+  .brand h1 { font-size: 18px; margin: 0; }
+  .brand .ver { color: var(--muted); font-size: 11px; font-family: monospace; }
+  .subtitle { color: var(--muted2); font-size: 12px; margin-bottom: 18px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .panel h2 { font-size: 13px; margin: 0 0 10px 0; }
+  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .row:last-child { margin-bottom: 0; }
+  .row label { width: 108px; flex-shrink: 0; color: var(--muted2); font-size: 12px; }
+  select, input[type=text], input[type=number] {
+    flex: 1; padding: 7px 9px; border-radius: 6px; border: 1px solid #CFD4DC;
+    font-size: 12.5px; background: #fff; color: var(--text); font-family: inherit;
+  }
+  input:disabled, select:disabled { background: #F1F3F6; color: var(--muted); }
+
+  /* Custom dropdown, NOT a native <select>. A native select's open popup is
+     rendered by the OS/WebView2 as its own top-level surface sized to the
+     longest option text -- a long Windows device description (the tM-7565's
+     own USB string, or Bluetooth SPP ports, both observed) can render OUTSIDE
+     the app window entirely, uncontrollable from CSS. This version is plain
+     DOM inside our own clipped box: the list can never be wider than the
+     button that opens it, only taller (and then it scrolls). */
+  .ddown { position: relative; flex: 1; min-width: 0; }
+  .ddown-btn {
+    width: 100%; text-align: left; padding: 7px 9px; border-radius: 6px;
+    border: 1px solid #CFD4DC; background: #fff; font-size: 12.5px; font-family: inherit;
+    color: var(--text); cursor: pointer; display: flex; align-items: center;
+    justify-content: space-between; gap: 8px;
+  }
+  .ddown-btn:hover { border-color: #B7BEC9; }
+  .ddown-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .ddown-caret { color: var(--muted); flex-shrink: 0; font-size: 10px; }
+  .ddown-list {
+    position: absolute; top: 100%; left: 0; right: 0; margin-top: 3px; z-index: 50;
+    background: #fff; border: 1px solid var(--border); border-radius: 7px;
+    box-shadow: 0 6px 18px rgba(23,26,33,.14); max-height: 220px;
+    overflow-y: auto; overflow-x: hidden;   /* vertical growth only -- never wider than the button */
+  }
+  .ddown-item {
+    padding: 8px 10px; font-size: 12px; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ddown-item:hover, .ddown-item.active { background: var(--air-soft); }
+  .ddown-item.empty { color: var(--muted); cursor: default; }
+  .ddown-item.empty:hover { background: transparent; }
+  .ddown-tag { color: var(--muted); font-size: 10.5px; }
+  .btn {
+    padding: 9px 16px; border-radius: 7px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 600; background: #EDEFF3; color: var(--text);
+  }
+  .btn:hover { background: #E4E7EC; }
+  .btn.primary { background: var(--text); color: #fff; }
+  .btn.primary:hover { background: #2b2f38; }
+  .btn.primary:disabled { background: #C6CBD4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; border: 1px solid var(--border); }
+  .btn.small { padding: 5px 10px; font-size: 11.5px; }
+  .hint { color: var(--muted); font-size: 11px; line-height: 1.5; }
+  .safety-hint { color: var(--warn); font-size: 11px; }
+
+  /* -- first-run T&C ---------------------------------------------------- */
+  #gate .banner {
+    background: var(--warn-soft); border: 1px solid var(--warn-line); color: #6B4F00;
+    border-radius: 8px; padding: 10px 12px; font-size: 12px; margin-bottom: 14px; line-height: 1.5;
+  }
+  .driver-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;
+  }
+  .driver-card .name { font-weight: 600; font-size: 12.5px; }
+  .driver-card .desc { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .ack-row { display: flex; align-items: flex-start; gap: 9px; margin: 14px 0 4px; }
+  .ack-row input { margin-top: 3px; }
+  .ack-row label { color: var(--text); font-size: 12.5px; line-height: 1.5; cursor: pointer; }
+
+  /* -- mode / role tabs --------------------------------------------------- */
+  .mode-tabs { display: flex; gap: 2px; padding: 2px; background: #F1F3F6;
+               border: 1px solid var(--border); border-radius: 7px; margin-bottom: 12px; }
+  .mode-tabs button {
+    flex: 1; padding: 8px 10px; border: none; background: transparent; cursor: pointer;
+    border-radius: 5px; font-size: 12.5px; font-weight: 600; color: var(--muted2);
+  }
+  .mode-tabs button.active { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
+  .bus-mode-choice { display: flex; flex-direction: column; gap: 8px; }
+  .bus-mode-choice label {
+    display: flex; align-items: flex-start; gap: 9px; padding: 9px 10px;
+    border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 12px;
+  }
+  .bus-mode-choice label.chosen { border-color: var(--air); background: var(--air-soft); }
+  .bus-mode-choice input { margin-top: 2px; }
+  .bus-mode-choice .t { font-weight: 600; }
+  .bus-mode-choice .d { color: var(--muted2); font-size: 11px; margin-top: 2px; }
+
+  #advancedBody { display: none; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; }
+  #advancedBody.open { display: block; }
+  .advtoggle { color: var(--air); font-size: 11.5px; cursor: pointer; }
+
+  .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .status { font-size: 11.5px; min-height: 16px; }
+  .status.err { color: var(--bad); }
+  .status.ok { color: var(--good); }
+  .spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid #C6CBD4;
+             border-top-color: var(--text); border-radius: 50%; animation: spin .7s linear infinite;
+             vertical-align: -1px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  [hidden] { display: none !important; }
+  a.about-link { color: var(--muted); font-size: 11px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand"><h1>LMV Actuator Checker</h1><span class="ver" id="verChip">v…</span></div>
+  <div class="subtitle">Connect to a CAN-USB adapter, or try it with a recorded demo -- no hardware needed.</div>
+
+  <!-- ============================== FIRST-RUN GATE ============================== -->
+  <div id="gate" class="panel">
+    <h2>Before you start</h2>
+    <div class="banner">
+      <b>This tool talks directly to CAN bus hardware.</b> On a live burner control system it
+      can, if put into <b>Keep alive</b> mode, transmit onto a safety-relevant bus. Use
+      <b>Listen only</b> (selected below by default) on any bus you do not own or fully
+      understand -- a plant line, a burner that is not isolated from fuel and ignition.
+      Only use Keep alive on a bench that is de-fuelled, de-ignited, and mechanically isolated.
+    </div>
+
+    <h2>Driver for your adapter</h2>
+    <p class="hint" style="margin-top:-4px;">
+      Windows needs a driver for the adapter's virtual COM port before it will show up below.
+      If your device is not listed after plugging it in, install the matching driver first.
+    </p>
+    <div class="driver-card">
+      <div>
+        <div class="name">ESP32 CAN bridge</div>
+        <div class="desc">Silicon Labs CP210x USB-to-UART driver (VID 10C4:EA60)</div>
+      </div>
+      <button class="btn small" onclick="openDriverSearch('esp32')">Find driver</button>
+    </div>
+    <div class="driver-card">
+      <div>
+        <div class="name">ICP DAS tM-7565</div>
+        <div class="desc">ICP DAS tM-7565 USB-to-CAN driver (VID 1B5C:0109)</div>
+      </div>
+      <button class="btn small" onclick="openDriverSearch('tm7565')">Find driver</button>
+    </div>
+    <div class="hint" style="margin-top:6px;">Opens a web search in your default browser -- we do not bundle vendor installers, so verify you're on the manufacturer's own site before running anything it offers.</div>
+
+    <div class="ack-row">
+      <input type="checkbox" id="ackBox" onchange="onAckToggle()">
+      <label for="ackBox">I have installed the driver for my adapter (or I'm trying the demo
+        first), and I understand this tool can transmit onto a live CAN bus if I explicitly
+        switch to Keep alive mode.</label>
+    </div>
+    <div class="footer">
+      <span></span>
+      <button class="btn primary" id="btnContinue" disabled onclick="continueFromGate()">Continue</button>
+    </div>
+  </div>
+
+  <!-- ============================== PICKER ============================== -->
+  <div id="picker" hidden>
+
+    <div class="panel">
+      <div class="mode-tabs">
+        <button id="tabPort" class="active" onclick="setSourceMode('port')">Connect to adapter</button>
+        <button id="tabReplay" onclick="setSourceMode('replay')">Try a demo (no hardware)</button>
+      </div>
+
+      <div id="portSection">
+        <div class="row">
+          <label>Port</label>
+          <div class="ddown" id="portDdown">
+            <button type="button" class="ddown-btn" id="portDdownBtn" onclick="toggleDdown('portDdown')">
+              <span class="ddown-label" id="portDdownLabel">Scanning…</span>
+              <span class="ddown-caret">▾</span>
+            </button>
+            <div class="ddown-list" id="portDdownList" hidden></div>
+          </div>
+          <button class="btn small" onclick="refreshPorts()">⟳</button>
+        </div>
+        <div class="hint" id="portHint" style="margin-left:118px;">No ports found. Plug in your adapter, or click ⟳ to rescan.</div>
+      </div>
+
+      <div id="replaySection" hidden>
+        <div class="row">
+          <label>Demo capture</label>
+          <div class="ddown" id="replayDdown">
+            <button type="button" class="ddown-btn" id="replayDdownBtn" onclick="toggleDdown('replayDdown')">
+              <span class="ddown-label" id="replayDdownLabel">…</span>
+              <span class="ddown-caret">▾</span>
+            </button>
+            <div class="ddown-list" id="replayDdownList" hidden></div>
+          </div>
+        </div>
+        <div class="hint" style="margin-left:118px;">Real recorded traffic, replayed as if it were live -- nothing is transmitted, safe anywhere.</div>
+      </div>
+
+      <div class="advtoggle" onclick="toggleAdvanced()" id="advToggleLabel" style="margin-top:12px;">▸ Advanced (UART baud, CAN bitrate label)</div>
+      <div id="advancedBody">
+        <div class="row">
+          <label>UART baud</label>
+          <input type="number" id="baudInput" value="115200">
+        </div>
+        <div class="hint" style="margin-left:118px; margin-bottom:8px;">Between this PC and the adapter. 115200 is correct for both the tM-7565 and the ESP32 bridge -- change it only if you know your adapter uses something else.</div>
+        <div class="row">
+          <label>CAN bitrate</label>
+          <input type="text" id="bitrateInput" value="50 kbps">
+        </div>
+        <div class="hint" style="margin-left:118px;">Not set by this app -- the physical CAN bus speed is configured on the adapter itself (VxCAN Utility for the tM-7565; firmware for the ESP32 bridge). This label is only recorded into your session and PDF reports. LMV5 buses run at 50 kbps.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Bus mode</h2>
+      <div class="bus-mode-choice">
+        <label id="modeListenLabel" class="chosen">
+          <input type="radio" name="busmode" value="listen" checked onchange="onModeChange()">
+          <div><div class="t">Listen only (recommended)</div>
+            <div class="d">Receive-only. Nothing is ever transmitted, whatever you click once the dashboard opens. Safe on any bus, including ones you do not own.</div></div>
+        </label>
+        <label id="modeActiveLabel">
+          <input type="radio" name="busmode" value="active" onchange="onModeChange()">
+          <div><div class="t">Keep alive (transmit) -- isolated bench only</div>
+            <div class="d">Unlocks the dashboard's transmit controls. You will still need to confirm the isolated-bench checklist there before anything is actually sent -- this only removes the hard lock.</div></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="margin-bottom:0;">
+        <label>Reports save to</label>
+        <span class="hint" id="outputDirHint" style="flex:1;">…</span>
+      </div>
+      <div class="hint" style="margin-top:4px;">Every export (PDF report, census JSON, raw capture) opens a Save-as dialog -- this is only where that dialog starts.</div>
+    </div>
+
+    <div class="footer">
+      <a class="about-link" onclick="reopenGate()">Drivers &amp; safety notice</a>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="status" id="connectStatus"></span>
+        <button class="btn primary" id="btnConnect" onclick="doConnect()">Launch dashboard</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// This page runs with NO Flask server behind it -- it is loaded directly by
+// pywebview via html=..., and everything it needs from Python comes through
+// window.pywebview.api (desktop/launcher.py's Api class). Once "Launch
+// dashboard" succeeds, this whole page is replaced by a normal navigation to
+// the real Flask app; nothing here runs again until the process restarts.
+
+function api() { return window.pywebview && window.pywebview.api; }
+
+async function waitForApi() {
+  for (let i = 0; i < 200; i++) {
+    if (api()) return;
+    await new Promise(r => setTimeout(r, 25));
+  }
+}
+
+let sourceMode = "port";
+let lastPorts = [];
+
+function setSourceMode(mode) {
+  sourceMode = mode;
+  document.getElementById("tabPort").classList.toggle("active", mode === "port");
+  document.getElementById("tabReplay").classList.toggle("active", mode === "replay");
+  document.getElementById("portSection").hidden = mode !== "port";
+  document.getElementById("replaySection").hidden = mode !== "replay";
+}
+
+function toggleAdvanced() {
+  const body = document.getElementById("advancedBody");
+  const open = body.classList.toggle("open");
+  document.getElementById("advToggleLabel").textContent =
+    (open ? "▾" : "▸") + " Advanced (UART baud, CAN bitrate label)";
+}
+
+function onModeChange() {
+  const active = document.querySelector('input[name=busmode]:checked').value === "active";
+  document.getElementById("modeListenLabel").classList.toggle("chosen", !active);
+  document.getElementById("modeActiveLabel").classList.toggle("chosen", active);
+}
+
+// ---------------------------------------------------------- custom dropdown --
+// State lives on the DOM node itself (dataset + a JS property for the raw
+// item list) rather than a separate global map -- one dropdown, one place its
+// state can drift from its markup.
+
+function toggleDdown(id) {
+  const list = document.getElementById(id + "List");
+  const willOpen = list.hidden;
+  closeAllDdowns();
+  if (willOpen) list.hidden = false;
+}
+
+function closeAllDdowns() {
+  document.querySelectorAll(".ddown-list").forEach(l => l.hidden = true);
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".ddown")) closeAllDdowns();
+});
+
+/**
+ * items: [{value, text, sub}]   sub is an optional short secondary label
+ * (used for the guessed adapter type) rendered lighter, still inside the
+ * SAME ellipsis-truncated line -- it is data, not a reason to widen anything.
+ */
+function setDdownItems(id, items, selectedValue, emptyText) {
+  const btn = document.getElementById(id + "Btn");
+  const label = document.getElementById(id + "Label");
+  const list = document.getElementById(id + "List");
+  btn.dataset.items = JSON.stringify(items);
+  list.innerHTML = "";
+
+  if (!items.length) {
+    label.textContent = emptyText;
+    btn.title = emptyText;
+    btn.dataset.value = "";
+    const row = document.createElement("div");
+    row.className = "ddown-item empty";
+    row.textContent = emptyText;
+    list.appendChild(row);
+    return;
+  }
+
+  for (const it of items) {
+    const row = document.createElement("div");
+    row.className = "ddown-item";
+    row.title = it.text + (it.sub ? "  " + it.sub : "");   // full text on hover, however long
+    row.textContent = it.sub ? `${it.text}  ${it.sub}` : it.text;
+    row.addEventListener("click", () => selectDdownItem(id, it));
+    list.appendChild(row);
+  }
+
+  const chosen = items.find(it => it.value === selectedValue) || items[0];
+  selectDdownItem(id, chosen, /* keepClosed */ true);
+}
+
+function selectDdownItem(id, item, keepClosed) {
+  const btn = document.getElementById(id + "Btn");
+  const label = document.getElementById(id + "Label");
+  btn.dataset.value = item.value;
+  label.textContent = item.sub ? `${item.text}  ${item.sub}` : item.text;
+  btn.title = label.textContent;
+  document.querySelectorAll(`#${id}List .ddown-item`).forEach(el =>
+    el.classList.toggle("active", el.textContent === label.textContent));
+  if (!keepClosed) closeAllDdowns();
+}
+
+function getDdownValue(id) {
+  return document.getElementById(id + "Btn").dataset.value || "";
+}
+
+async function refreshPorts() {
+  document.getElementById("portDdownLabel").textContent = "Scanning…";
+  const ports = await api().list_ports();
+  lastPorts = ports || [];
+  document.getElementById("portHint").style.display = lastPorts.length ? "none" : "block";
+  // Prefer a recognised adapter over whatever sorts first alphabetically.
+  const recognised = lastPorts.find(p => p.recognised);
+  const items = lastPorts.map(p => ({
+    value: p.device, text: `${p.device}  (${p.description})`,
+    sub: p.guessed_type || "",
+  }));
+  setDdownItems("portDdown", items, recognised ? recognised.device : null,
+                "No ports found");
+}
+
+async function loadReplays() {
+  const items = await api().list_replays();
+  const ddItems = (items || []).map(it => ({ value: it.path, text: it.label }));
+  setDdownItems("replayDdown", ddItems, null, "No demo captures bundled");
+}
+
+function openDriverSearch(which) { api() && api().open_driver_search(which); }
+
+function onAckToggle() {
+  document.getElementById("btnContinue").disabled = !document.getElementById("ackBox").checked;
+}
+
+async function continueFromGate() {
+  await api().acknowledge_first_run();
+  document.getElementById("gate").hidden = true;
+  document.getElementById("picker").hidden = false;
+  await initPicker();
+}
+
+function reopenGate() {
+  document.getElementById("picker").hidden = true;
+  document.getElementById("gate").hidden = false;
+}
+
+async function initPicker() {
+  await refreshPorts();
+  await loadReplays();
+  const d = await api().get_defaults();
+  if (d) {
+    document.getElementById("baudInput").value = d.baud;
+    document.getElementById("bitrateInput").value = d.can_bitrate_label;
+    document.getElementById("outputDirHint").textContent = d.output_dir;
+  }
+}
+
+async function doConnect() {
+  const btn = document.getElementById("btnConnect");
+  const status = document.getElementById("connectStatus");
+  const listenOnly = document.querySelector('input[name=busmode]:checked').value !== "active";
+
+  const params = {
+    mode: sourceMode,
+    port: getDdownValue("portDdown"),
+    baud: parseInt(document.getElementById("baudInput").value, 10) || 115200,
+    can_bitrate_label: document.getElementById("bitrateInput").value,
+    replay_file: getDdownValue("replayDdown"),
+    listen_only: listenOnly,
+  };
+  if (sourceMode === "port" && !params.port) {
+    status.className = "status err"; status.textContent = "Select a port first."; return;
+  }
+  if (sourceMode === "replay" && !params.replay_file) {
+    status.className = "status err"; status.textContent = "Select a demo capture first."; return;
+  }
+
+  btn.disabled = true;
+  status.className = "status";
+  status.innerHTML = '<span class="spinner"></span>Connecting…';
+
+  const result = await api().connect(params);
+  if (!result || !result.ok) {
+    btn.disabled = false;
+    status.className = "status err";
+    status.textContent = (result && result.error) || "Could not connect.";
+    return;
+  }
+  status.className = "status ok";
+  status.textContent = "Opening dashboard…";
+  window.location.href = result.url;
+}
+
+(async function init() {
+  await waitForApi();
+  const v = await api().app_version();
+  if (v) document.getElementById("verChip").textContent = "v" + v.version;
+
+  const first = await api().first_run_status();
+  if (first && first.acknowledged) {
+    document.getElementById("gate").hidden = true;
+    document.getElementById("picker").hidden = false;
+    await initPicker();
+  }
+})();
+</script>
+</body>
+</html>

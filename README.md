@@ -4,7 +4,7 @@
   <a href="https://github.com/wise78/lmv-actuator-checker/releases/latest">
     <img src="https://img.shields.io/badge/Download-v1.0.0%20Installer-2D62C4?style=for-the-badge&logo=windows&logoColor=white" alt="Download installer">
   </a>
-  <a href="docs/LMV%20Actuator%20Checker%20-%20Application%20Documentation.pdf">
+  <a href="https://github.com/wise78/lmv-actuator-checker/raw/main/docs/LMV%20Actuator%20Checker%20-%20Application%20Documentation.pdf">
     <img src="https://img.shields.io/badge/Documentation-PDF-17734A?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="Documentation">
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows-6E7C93?style=for-the-badge&logo=windows11&logoColor=white" alt="Windows">
@@ -83,9 +83,9 @@ Two independent gates stand between you and a transmitted frame, and every page 
 
 ## Documentation
 
-📘 **[Application Documentation (PDF)](docs/LMV%20Actuator%20Checker%20-%20Application%20Documentation.pdf)** — 38 pages, written for field technicians
+📘 **[Application Documentation (PDF)](https://github.com/wise78/lmv-actuator-checker/raw/main/docs/LMV%20Actuator%20Checker%20-%20Application%20Documentation.pdf)** — 38 pages, written for field technicians
 
-Covers installation, first launch, the safety system, all four pages screen-by-screen, the full Health Check workflow, keyboard shortcuts, troubleshooting, and wiring reference diagrams. Also available as [DOCX](docs/LMV%20Actuator%20Checker%20-%20Application%20Documentation.docx).
+Covers installation, first launch, the safety system, all four pages screen-by-screen, the full Health Check workflow, keyboard shortcuts, troubleshooting, and wiring reference diagrams. Also available as a [DOCX download](https://github.com/wise78/lmv-actuator-checker/raw/main/docs/LMV%20Actuator%20Checker%20-%20Application%20Documentation.docx).
 
 Wiring references:
 - [USB/CAN adapter wiring](docs/CANtoBUS%20Adapter%20Wiring%20advice.png) — tM-7565 and ESP32 + MCP2515
